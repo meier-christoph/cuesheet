@@ -1,8 +1,9 @@
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 import scala.xml.{Comment, Elem, Node => XmlNode, NodeSeq => XmlNodeSeq}
 import UpdateReadme._
+import sbt.Keys.publishTo
 
-val sparkVersion = "2.2.0"
+val sparkVersion = "2.1.0"
 
 val hadoopVersion = "2.7.3"
 
@@ -29,7 +30,7 @@ val hbaseDependencies = Seq("server", "common").map {
 val jdkVersionCheck = taskKey[Unit]("Check JDK version")
 
 jdkVersionCheck := {
-  val required = "1.7"
+  val required = "1.8"
   val current  = sys.props("java.specification.version")
   assert(current == required || sys.env.contains("TRAVIS"), s"JDK $required is required for compatibility; current version = $current")
 }
@@ -37,7 +38,7 @@ jdkVersionCheck := {
 val settings = Seq(
   organization := "com.kakao.cuesheet",
   isSnapshot := version.value.endsWith("-SNAPSHOT"),
-  crossScalaVersions := Seq("2.10.6", "2.11.8"),
+  crossScalaVersions := Seq("2.11.8"),
   scalaVersion := crossScalaVersions.value.last,
   // disable Scaladoc for now
   sources in (Compile, doc) := Seq.empty,
@@ -49,6 +50,7 @@ val settings = Seq(
   description := "A framework for writing Spark 2.x applications, in a pretty way",
   scmInfo := Some { val git = "https://github.com/kakao/cuesheet.git"; ScmInfo(url(git), s"scm:git:$git", Some(s"scm:git:$git")) },
   developers := List(Developer("jongwook", "Jong Wook Kim", "jongwook@nyu.edu", url("https://github.com/jongwook"))),
+  /*
   publishTo := {
     val maven = "https://oss.sonatype.org"
     if (isSnapshot.value)
@@ -56,13 +58,23 @@ val settings = Seq(
     else
       Some("Sonatype Staging" at s"$maven/service/local/staging/deploy/maven2")
   },
+  */
+
+  credentials += Credentials(Path.userHome / ".sbt" / "credentials"),
+  publishTo := {
+    val nexus = "http://nexus.foyer.lu/nexus/content/repositories/"
+    if (isSnapshot.value)
+      Some("snapshots" at nexus + "foyer-play-snapshots")
+    else
+      Some("releases" at nexus + "foyer-play-releases")
+  },
 
   // add Sonatype credentials if it exists
-  credentials ++= Seq(Path.userHome / ".ivy2" / ".credentials").filter(_.exists()).map(Credentials.apply),
+  //credentials ++= Seq(Path.userHome / ".ivy2" / ".credentials").filter(_.exists()).map(Credentials.apply),
   // add updateReadme action to the release process
   releaseProcess := customReleaseProcess,
   // codesign artifacts
-  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+  //releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   // cross-build on release by default
   releaseCrossBuild := true,
   // remove provided and test scope dependency from the POM

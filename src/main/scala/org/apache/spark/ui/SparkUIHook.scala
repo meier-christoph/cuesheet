@@ -15,10 +15,10 @@ case class SparkUIHook(sc: SparkContext) {
 
     ui.attachTab(page.tab)
   }
-  
+
   def getUIAddress: String = {
     val ui = sc.ui.getOrElse { throw new SparkException("No Spark UI found!") }
-    ui.webUrl
+    ui.appUIAddress
   }
 
 }
